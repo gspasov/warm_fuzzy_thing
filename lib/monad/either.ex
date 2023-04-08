@@ -1,76 +1,99 @@
 defmodule Monad.Either do
-  @spec unit(value :: term()) :: {:ok, term()}
-  def unit(value), do: {:ok, value}
+  @type t(reason, value) :: {:error, reason} | {:ok, value}
 
-  @spec map({:ok, value} | {:error, reason}, (value -> new_value)) ::
-          {:ok, new_value} | {:error, reason}
-        when value: term(), new_value: term(), reason: term()
-  def map({:error, _reason} = error, _fun), do: error
-  def map({:ok, data}, fun) when is_function(fun), do: {:ok, fun.(data)}
+  @spec map(either, function) :: either
+        when either: {:error, reason} | {:ok, value},
+             function: (value -> new_value),
+             value: any(),
+             new_value: any(),
+             reason: any()
+  def map({:error, reason}, _fun), do: {:error, reason}
+  def map({:ok, value}, fun) when is_function(fun), do: {:ok, fun.(value)}
 
-  @spec bind(
-          {:ok, value} | {:error, reason},
-          (value -> {:ok, new_value} | {:error, new_reason})
-        ) ::
-          {:ok, new_value} | {:error, reason | new_reason}
-        when value: term(), new_value: term(), reason: term(), new_reason: term()
-  def bind({:error, _reason} = error, _fun), do: error
-  def bind({:ok, data}, fun) when is_function(fun), do: fun.(data)
+  @spec bind(either, function) :: either
+        when either: {:error, reason} | {:ok, value},
+             function: (value -> either),
+             value: any(),
+             reason: any()
+  def bind({:error, reason}, _fun), do: {:error, reason}
+  def bind({:ok, value}, fun) when is_function(fun), do: fun.(value)
 
-  @spec fold({:ok, data} | {:error, reason}, default :: new_value, (data -> new_value)) :: data
-        when data: term(), new_value: term(), reason: term()
+  @spec fold(either, default :: new_value, function) :: new_value
+        when either: {:error, reason} | {:ok, value},
+             function: (value -> new_value),
+             value: any(),
+             new_value: any(),
+             reason: any()
   def fold(input, default \\ nil, function)
 
   def fold({:error, _reason}, default, _fun), do: default
-  def fold({:ok, data}, _default, fun) when is_function(fun), do: fun.(data)
+  def fold({:ok, value}, _default, fun) when is_function(fun), do: fun.(value)
 
-  @spec on_left(input, (reason -> :ok)) :: input
-        when input: {:ok, term()} | {:error, reason}, reason: term()
-  def on_left({:error, _} = error, fun) when is_function(fun) do
-    fun.()
-    error
+  @spec on_left(either, function) :: either
+        when either: {:error, reason} | {:ok, value},
+             function: (reason -> :ok),
+             value: any(),
+             reason: any()
+  def on_left(either, function)
+
+  def on_left({:ok, value}, _fun), do: {:ok, value}
+
+  def on_left({:error, reason}, fun) when is_function(fun) do
+    fun.(reason)
+    {:error, reason}
   end
 
-  def on_left({:ok, _} = data, fun) when is_function(fun), do: data
+  @spec on_right(either, function) :: either
+        when either: {:error, reason} | {:ok, value},
+             function: (value -> :ok),
+             value: any(),
+             reason: any()
+  def on_right(either, function)
+  def on_right({:error, reason}, _fun), do: {:error, reason}
 
-  @spec on_right(input, (value -> :ok)) :: input
-        when input: {:ok, value} | {:error, any()}, value: term()
-  def on_right({:error, _} = error, fun) when is_function(fun), do: error
-
-  def on_right({:ok, value} = data, fun) do
+  def on_right({:ok, value}, fun) do
     fun.(value)
-    data
+    {:ok, value}
   end
 
   @doc """
   Map
   """
-  @spec ({:ok, value} | {:error, reason}) ~> (value -> new_value) ::
-          {:ok, new_value} | {:error, reason}
-        when value: term(), new_value: term(), reason: any()
+  @spec either ~> function :: either
+        when either: {:error, reason} | {:ok, value},
+             function: (value -> new_value),
+             value: any(),
+             new_value: any(),
+             reason: any()
   def {:error, reason} ~> _, do: {:error, reason}
   def {:ok, value} ~> fun when is_function(fun), do: {:ok, fun.(value)}
 
   @doc """
   Bind
   """
-  @spec ({:ok, value} | {:error, reason}) ~>> (value -> {:ok, new_value} | {:error, new_reason}) ::
-          {:ok, new_value} | {:error, reason | new_reason}
-        when value: term(), new_value: term(), reason: any(), new_reason: any()
+  @spec either ~>> function :: either
+        when either: {:error, reason} | {:ok, value},
+             function: (value -> either),
+             value: any(),
+             reason: any()
   def {:error, reason} ~>> _, do: {:error, reason}
 
   def {:ok, value} ~>> fun when is_function(fun) do
     case fun.(value) do
-      {:ok, _} = res -> res
-      {:error, _} = error -> error
+      {:ok, value} -> {:ok, value}
+      {:error, reason} -> {:error, reason}
     end
   end
 
   @doc """
   Fold
   """
-  @spec ({:ok, value} | {:error, any()}) <~> ((value -> new_value) | new_value) :: new_value
-        when value: term(), new_value: term()
+  @spec either <~> ((default :: new_value) | function) :: new_value
+        when either: {:error, reason} | {:ok, value},
+             function: (value -> new_value),
+             value: any(),
+             new_value: any(),
+             reason: any()
   def {:error, _} <~> default, do: default
   def {:ok, value} <~> fun when is_function(fun), do: fun.(value)
 end

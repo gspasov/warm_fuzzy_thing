@@ -1,8 +1,14 @@
 defmodule Monad.Maybe do
   @moduledoc """
-  Monad that either holds a `value` or `nil` (_it doesn't_).
-  The value is wrapped in the well known pattern of _`{:ok, any()}`_.
-  Otherwise `Maybe` holds onto a `nil` value (for the situations where there isn't a value).
+  The `Maybe` monad is a union between two general notions: `Just` and `Nothing` (_the naming is inherited from Haskell and it depicts the idea: "Maybe I have a value, maybe I don't."_).
+  This means that a `Maybe` monad can either be a `Just` or it can be a `Nothing` (_think of it as a simple `union` between two types_).
+  A `Just` is represented by the well known success type tuple `{:ok, value} when value: any()`,
+  where as a `Nothing` is represented by `nil`, since it's the closest Elixir gets to representing "nothing".
+
+  `Maybe` exports a set of function for ease of chaining functions (_transformations_):
+    - `Monad.Maybe.fmap/2` - Used for applying a function over the value of a `Maybe` monad;
+    - `Monad.Maybe.bind/2` - Used for applying a function over a value inside a `Maybe` monad that returns a brand new `Maybe` monad;
+    - `Monad.Maybe.fold/3` - Used for either returning a default value or applying a function over the value inside the `Maybe` monad;
 
   ## Example
       iex> Monad.Maybe.fmap({:ok, 1}, fn v -> v + 1 end)
@@ -15,6 +21,55 @@ defmodule Monad.Maybe do
       nil
       iex> Monad.Maybe.bind({:ok, 1}, fn v -> nil end)
       nil
+      iex> Monad.Maybe.fold({:ok, 1}, &Monad.id/1)
+      1
+      iex> Monad.Maybe.fold(nil, &Monad.id/1)
+      nil
+      iex> Monad.Maybe.fold(nil, :empty, &Monad.id/1)
+      :empty
+
+  This set of function are setup in a way to allow for easy pipelining.
+
+  ## Example
+      iex> {:ok, "hello"}
+      ...> |> Monad.Maybe.fmap(fn v -> v <> " world" end)
+      ...> |> Monad.Maybe.fmap(&String.length/1)
+      ...> |> Monad.Maybe.bind(fn
+      ...>    v when v <= 20 -> {:ok, v}
+      ...>    _ -> nil
+      ...>  end)
+      ...> |> Monad.Maybe.fold(&Monad.id/1)
+      11
+
+  `Maybe` exports a set of operators for handling the chaining functions:
+    - `~>` represents `Monad.Maybe.fmap/2`
+    - `~>>` represents `Monad.Maybe.bind/2`
+    - `<~>` represents `Monad.Maybe.fold/3`
+
+  ## Example
+      iex> import Monad.Maybe, only: [~>: 2, ~>>: 2, <~>: 2]
+      iex> {:ok, "elixir"} ~> &String.length/1
+      {:ok, 6}
+      iex> nil ~> &String.length/1
+      nil
+      iex> {:ok, "elixir"} ~>> &({:ok, String.length(&1)})
+      {:ok, 6}
+      iex> {:ok, ""} ~>> fn "" -> nil; v -> {:ok, String.length(v)} end
+      nil
+      iex> {:ok, "elixir"} <~> &String.length/1
+      6
+      iex> nil ~>> fn v -> {:ok, v + 1} end
+      nil
+      iex> nil <~> fn v -> v + 1 end
+      nil
+      iex> nil <~> {:not_found, fn v -> v + 1 end}
+      :not_found
+      iex> {:ok, "elixir"}
+      ...> ~> fn v -> v <> " with monads" end
+      ...> ~> fn v -> v <> " is awesome" end
+      ...> ~>> fn v when v < 20 -> nil; v -> {:ok, String.length(v)} end
+      ...> <~> {0, &Monad.id/1}
+      29
   """
 
   @behaviour Monad
@@ -24,7 +79,7 @@ defmodule Monad.Maybe do
   @type t(value) :: nil | {:ok, value}
 
   @doc """
-  Checks whether a `Maybe` monad is `'nothing'` (_essentially empty_)
+  Checks whether a `Maybe` monad is `Nothing` (_essentially empty_)
 
   ## Example
     iex> import Monad.Maybe
@@ -37,7 +92,7 @@ defmodule Monad.Maybe do
   defmacro nothing?(_), do: quote(do: false)
 
   @doc """
-  Checks whether a `Maybe` monad is a `'just'`
+  Checks whether a `Maybe` monad is a `Just`
 
   ## Example
     iex> import Monad.Maybe
@@ -55,10 +110,10 @@ defmodule Monad.Maybe do
   def pure(value), do: {:ok, value}
 
   @doc """
-  Apply a function over the `'just'` portion of a `Maybe` monad.
-  The result of the function will be the `new` `'just'` portion of the `Maybe` Monad.
+  Apply a function over the `Just` portion of a `Maybe` monad.
+  The result of the function will be the `new` `Just` portion of the `Maybe` Monad.
 
-  If a `Maybe` monad with a `'nothing'` value is passed, the function is not invoked,
+  If a `Maybe` monad with a `Nothing` value is passed, the function is not invoked,
   `Monad.Maybe.fmap/2` return a `nil`.
 
   ## Example
@@ -80,11 +135,11 @@ defmodule Monad.Maybe do
   def fmap({:ok, value}, f) when is_function(f), do: {:ok, f.(value)}
 
   @doc """
-  Apply a function over the `'just'` portion of a `Maybe` monad.
+  Apply a function over the `Just` portion of a `Maybe` monad.
   The result of the function will be a brand new `Maybe` monad.
-  This means that the value inside the monad can change from `'just'` to `'nothing'` and vice versa.
+  This means that the value inside the monad can change from `Just` to `Nothing` and vice versa.
 
-  If a `Maybe` monad with a `'nothing'` value is passed, the function is not invoked,
+  If a `Maybe` monad with a `Nothing` value is passed, the function is not invoked,
   `Monad.Maybe.bind/2` return a `nil`.
 
   ## Example
@@ -117,7 +172,7 @@ defmodule Monad.Maybe do
 
   @doc """
   Depending of the value inside the `Maybe` monad, fold will either (no pun intended):
-    - Apply the given function over the `'just'` value and return the value itself;
+    - Apply the given function over the `Just` value and return the value itself;
     - Return the `'default'` value given to the function. If no `'default'` value is provided, `nil` is returned;
 
   ## Example
@@ -178,7 +233,7 @@ defmodule Monad.Maybe do
   end
 
   @doc """
-  Call a 'void' type of function if the `Maybe` monad is a `'nothing'`.
+  Call a 'void' type of function if the `Maybe` monad is a `Nothing`.
   `Monad.Maybe.on_nothing/2` returns the `Maybe` as is. No changes are applied.
 
   _If the `Maybe` has a `'right'` value inside, the function is not invoked._
@@ -204,10 +259,10 @@ defmodule Monad.Maybe do
   end
 
   @doc """
-  Call a 'void' type of function if the `Maybe` monad is a `'just'`.
+  Call a 'void' type of function if the `Maybe` monad is a `Just`.
   `Monad.Maybe.on_just/2` returns the `Maybe` as is. No changes are applied.
 
-  _If the `Maybe` has a `'nothing'` value inside, the function is not invoked._
+  _If the `Maybe` has a `Nothing` value inside, the function is not invoked._
 
   ## Example
       iex> Monad.Maybe.on_just({:ok, 1}, &IO.inspect/1)

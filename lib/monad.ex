@@ -2,11 +2,11 @@ defmodule Monad do
   @moduledoc """
   Provides a way of working with already known Elixir constructs through monads.
 
-  `Monad.Maybe` represents `nil | {:ok, any()}`
+  `Monad.Maybe` represents the Union `nil | {:ok, value} when value: any()`.
 
-  `Monad.Either` represents `{:error, any()} | {:ok, any()}`
+  `Monad.Either` represents the Union `{:error, reason} | {:ok, value} when reason: any(), value: any()`.
 
-  Increases transformation pipeline capabilities through `Maybe` and `Either` monad.
+  _To understand more about their general idea and implementation details, head over to their respective documentation._
   """
 
   alias Monad.Either
@@ -19,6 +19,22 @@ defmodule Monad do
   @callback bind(Monad.t(a), (a -> Monad.t(b))) :: Monad.t(b) when a: any(), b: any()
   @callback fold(Monad.t(a), default :: b, (a -> b)) :: b when a: any(), b: any()
   @callback sequence([Monad.t(a)]) :: Monad.t([a]) when a: any()
+
+  @doc """
+  Functions that return the value itself.
+
+  ## Example
+      iex> Monad.id(10)
+      10
+      iex> Monad.id({:ok, 10})
+      {:ok, 10}
+      iex> Monad.id({:error, :not_found})
+      {:error, :not_found}
+      iex> Monad.id(nil)
+      nil
+  """
+  @spec id(value) :: value when value: any()
+  def id(value), do: value
 
   @doc """
   Converts a `Monad.Maybe` to `Monad.Either`

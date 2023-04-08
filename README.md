@@ -7,8 +7,32 @@ Both `Maybe` and `Either` monads have been setup to use already imposed structur
 
 The difference is that the `Either` monad is setup for holding errors while the `Maybe` monad only cares if there is a value or not.
 
-```elixir
+In Elixir usually to chain transformations and make sure that each step is correct we might use `with`
 
+```elixir
+with {:ok, value1} <- transform_1(input),
+     {:ok, value2} <- transform_2(value1),
+     {:ok, value3} <- transform_3(value2) do
+  # Handle success case
+else 
+  {:error, reason} -> # Handle error case
+end
+```
+
+Using `Monad.Either` this could look something like this
+```elixir
+input
+|> Either.pure()
+|> Either.bind(&transform_1/1)
+|> Either.bind(&transform_2/1)
+|> Either.bind(&transform_3/1)
+|> case do
+  {:ok, value3} -> # Handle success case
+  {:error, reason} -> # Handle error case
+end
+```
+
+```elixir
 iex> alias Monad.Either
 Monad.Either
 iex> {:ok, 1}

@@ -133,6 +133,8 @@ defmodule Monad.Either do
              value: any(),
              function: (value -> new_value),
              new_value: any()
+  def fmap(either, function)
+
   def fmap({:error, reason}, _f), do: {:error, reason}
   def fmap({:ok, value}, f) when is_function(f), do: {:ok, f.(value)}
 
@@ -164,6 +166,8 @@ defmodule Monad.Either do
              new_either: Either.t(new_reason, new_value),
              new_value: any(),
              new_reason: any()
+  def bind(either, function)
+
   def bind({:error, reason}, _f), do: {:error, reason}
 
   def bind({:ok, value}, f) when is_function(f) do
@@ -220,9 +224,11 @@ defmodule Monad.Either do
   @impl true
   @spec sequence([Either.t(reason, value)]) :: Either.t(reason, [value])
         when reason: any(), value: any()
+  def sequence(eithers)
+
   def sequence([]), do: {:ok, []}
 
-  def sequence(eithers) do
+  def sequence(eithers) when is_list(eithers) do
     eithers
     |> Enum.reduce_while([], fn
       {:error, reason}, _acc -> {:halt, {:error, reason}}
@@ -279,11 +285,35 @@ defmodule Monad.Either do
              value: any(),
              function: (value -> :ok)
   def on_right(either, function)
+
   def on_right({:error, reason}, _f), do: {:error, reason}
 
   def on_right({:ok, value}, f) when is_function(f) do
     f.(value)
     {:ok, value}
+  end
+
+  @doc """
+  Similar to how `Either.fmap/2` works, but it maps over the `Left` value of the `Either` monad.
+
+  Useful when you want to change the structure of the reason.
+
+  ## Example
+      iex> Monad.Either.map_left({:ok, 1}, fn reason -> {:operation, reason} end)
+      {:ok, 1}
+      iex> Monad.Either.map_left({:error, :not_found}, fn reason -> {:user, reason} end)
+      {:error, {:user, :not_found}}
+  """
+  @spec map_left(Either.t(reason, value), (reason -> new_reason)) :: Either.t(new_reason, value)
+        when reason: any(),
+             value: any(),
+             new_reason: any()
+  def map_left(either, function)
+
+  def map_left({:ok, value}, _f), do: {:ok, value}
+
+  def map_left({:error, reason}, f) when is_function(f) do
+    {:error, f.(reason)}
   end
 
   @doc """

@@ -2,12 +2,12 @@ defmodule Monad.Either do
   @moduledoc """
   Monad that either holds a `value` or it holds an `error`.
   The value is wrapped in the well known pattern of _`{:ok, any()}`_.
-  Otherwise `Either` holds an `error` value in the well known pattern of _`{:error, any()}`_
+  Otherwise `Either` holds an `error` in the well known pattern of _`{:error, any()}`_
 
   ## Example
-      iex> Monad.Either.map({:ok, 1}, fn v -> v + 1 end)
+      iex> Monad.Either.fmap({:ok, 1}, fn v -> v + 1 end)
       {:ok, 2}
-      iex> Monad.Either.map({:error, :not_a_number}, fn v -> v + 1 end)
+      iex> Monad.Either.fmap({:error, :not_a_number}, fn v -> v + 1 end)
       {:error, :not_a_number}
       iex> Monad.Either.bind({:ok, 1}, fn v -> {:ok, v + 1} end)
       {:ok, 2}
@@ -17,9 +17,42 @@ defmodule Monad.Either do
       {:error, :not_a_number}
   """
 
+  @behaviour Monad
+
   alias Monad.Either
 
   @type t(reason, value) :: {:error, reason} | {:ok, value}
+
+  @doc """
+  Checks whether a `Either` monad is `'left'`
+
+  ## Example
+    iex> import Monad.Either
+    iex> left?({:error, :empty})
+    true
+    iex> left?({:ok, 1})
+    false
+  """
+  defmacro left?({:error, _reason}), do: true
+  defmacro left?(_), do: false
+
+  @doc """
+  Checks whether a `Either` monad is `'right'`
+
+  ## Example
+    iex> import Monad.Either
+    iex> right?({:ok, 1})
+    true
+    iex> right?({:error, :empty})
+    false
+  """
+  defmacro right?({:ok, _value}), do: true
+  defmacro right?(_), do: false
+
+  @impl true
+  @spec pure({:error, reason} | value) :: Either.t(reason, value) when reason: any(), value: any()
+  def pure({:error, reason}), do: {:error, reason}
+  def pure(value), do: {:ok, value}
 
   @doc """
   Apply a function over the `'right'` portion (_the "success" value_) of an `Either` monad.
@@ -29,22 +62,23 @@ defmodule Monad.Either do
   `Monad.Either.map/2` just return the `'left'` value.
 
   ## Example
-      iex> Monad.Either.map({:ok, 1}, fn v -> v + 1 end)
+      iex> Monad.Either.fmap({:ok, 1}, fn v -> v + 1 end)
       {:ok, 2}
-      iex> Monad.Either.map({:ok, "hello"}, fn _v -> "world" end)
+      iex> Monad.Either.fmap({:ok, "hello"}, fn _v -> "world" end)
       {:ok, "world"}
-      iex> Monad.Either.map({:ok, "hello"}, &String.length/1)
+      iex> Monad.Either.fmap({:ok, "hello"}, &String.length/1)
       {:ok, 5}
-      iex> Monad.Either.map({:error, :not_a_number}, fn v -> v + 1 end)
+      iex> Monad.Either.fmap({:error, :not_a_number}, fn v -> v + 1 end)
       {:error, :not_a_number}
   """
-  @spec map(Either.t(reason, value), function) :: Either.t(reason, new_value)
+  @impl true
+  @spec fmap(Either.t(reason, value), function) :: Either.t(reason, new_value)
         when reason: any(),
              value: any(),
              function: (value -> new_value),
              new_value: any()
-  def map({:error, reason}, _f), do: {:error, reason}
-  def map({:ok, value}, f) when is_function(f), do: {:ok, f.(value)}
+  def fmap({:error, reason}, _f), do: {:error, reason}
+  def fmap({:ok, value}, f) when is_function(f), do: {:ok, f.(value)}
 
   @doc """
   Apply a function over the `'right'` portion (_the "success" value_) of an `Either` monad.
@@ -63,9 +97,10 @@ defmodule Monad.Either do
       {:ok, 5}
       iex> Monad.Either.bind({:ok, "hello"}, fn _v -> {:error, "something went wrong"} end)
       {:error, "something went wrong"}
-      iex> Monad.Either.map({:error, :not_a_number}, fn v -> {:ok, v + 1} end)
+      iex> Monad.Either.fmap({:error, :not_a_number}, fn v -> {:ok, v + 1} end)
       {:error, :not_a_number}
   """
+  @impl true
   @spec bind(Either.t(reason, value), function) :: new_either
         when reason: any(),
              value: any(),
@@ -100,6 +135,7 @@ defmodule Monad.Either do
       iex> Monad.Either.fold({:error, :not_a_number}, :not_found, fn v -> v + 1 end)
       :not_found
   """
+  @impl true
   @spec fold(Either.t(reason, value), default :: new_value, function) :: new_value
         when reason: any(),
              value: any(),
@@ -109,6 +145,39 @@ defmodule Monad.Either do
 
   def fold({:error, _reason}, default, _f), do: default
   def fold({:ok, value}, _default, f) when is_function(f), do: f.(value)
+
+  @doc """
+  Cycles through a sequence of `EIther`s, if it reaches a `'left'` `Either` it short circuits and returns it.
+
+  Otherwise returns a `Either` with a list of all values.
+
+  ## Example
+      iex> Monad.Either.sequence([{:ok, 1}, {:ok, 2}])
+      {:ok, [1, 2]}
+      iex> Monad.Either.sequence([])
+      {:ok, []}
+      iex> Monad.Either.sequence([{:ok, 1}, {:error, :not_found}, {:ok, 2}])
+      {:error, :not_found}
+      iex> Monad.Either.sequence([{:error, :not_found}, {:error, :empty}])
+      {:error, :not_found}
+  """
+  @impl true
+  @spec sequence([Either.t(reason, value)]) :: Either.t(reason, [value])
+        when reason: any(), value: any()
+  def sequence([]), do: {:ok, []}
+
+  def sequence(eithers) do
+    eithers
+    |> Enum.reduce_while([], fn
+      {:error, reason}, _acc -> {:halt, {:error, reason}}
+      {:ok, value}, acc -> {:cont, [value | acc]}
+    end)
+    |> case do
+      {:error, reason} -> {:error, reason}
+      acc -> Enum.reverse(acc)
+    end
+    |> Either.pure()
+  end
 
   @doc """
   Call a 'void' type of function if the `Either` monad is a `'left'`.

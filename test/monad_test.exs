@@ -11,9 +11,9 @@ defmodule MonadTest do
     test "map" do
       result =
         {:ok, 1}
-        |> Maybe.map(fn value -> value + 1 end)
-        |> Maybe.map(fn value -> value + 1 end)
-        |> Maybe.map(fn value -> value + 1 end)
+        |> Maybe.fmap(fn value -> value + 1 end)
+        |> Maybe.fmap(fn value -> value + 1 end)
+        |> Maybe.fmap(fn value -> value + 1 end)
 
       assert result == {:ok, 4}
     end
@@ -21,7 +21,7 @@ defmodule MonadTest do
     test "bind" do
       result =
         {:ok, 1}
-        |> Maybe.map(fn value -> value + 1 end)
+        |> Maybe.fmap(fn value -> value + 1 end)
         |> Maybe.bind(fn _value -> nil end)
 
       assert result == nil
@@ -30,9 +30,9 @@ defmodule MonadTest do
     test "fold" do
       result =
         {:ok, 1}
-        |> Maybe.map(fn value -> value + 1 end)
-        |> Maybe.map(fn value -> value + 1 end)
-        |> Maybe.map(fn value -> value + 1 end)
+        |> Maybe.fmap(fn value -> value + 1 end)
+        |> Maybe.fmap(fn value -> value + 1 end)
+        |> Maybe.fmap(fn value -> value + 1 end)
         |> Maybe.fold(fn value -> value + 1 end)
 
       assert result == 5
@@ -86,9 +86,9 @@ defmodule MonadTest do
     test "map" do
       result =
         {:ok, 1}
-        |> Either.map(fn value -> value + 1 end)
-        |> Either.map(fn value -> value + 1 end)
-        |> Either.map(fn value -> value + 1 end)
+        |> Either.fmap(fn value -> value + 1 end)
+        |> Either.fmap(fn value -> value + 1 end)
+        |> Either.fmap(fn value -> value + 1 end)
 
       assert result == {:ok, 4}
     end
@@ -96,7 +96,7 @@ defmodule MonadTest do
     test "bind" do
       result =
         {:ok, 1}
-        |> Either.map(fn value -> value + 1 end)
+        |> Either.fmap(fn value -> value + 1 end)
         |> Either.bind(fn _value -> {:error, "something is wrong"} end)
 
       assert result == {:error, "something is wrong"}
@@ -105,9 +105,9 @@ defmodule MonadTest do
     test "fold" do
       result =
         {:ok, 1}
-        |> Either.map(fn value -> value + 1 end)
-        |> Either.map(fn value -> value + 1 end)
-        |> Either.map(fn value -> value + 1 end)
+        |> Either.fmap(fn value -> value + 1 end)
+        |> Either.fmap(fn value -> value + 1 end)
+        |> Either.fmap(fn value -> value + 1 end)
         |> Either.fold(fn value -> value + 1 end)
 
       assert result == 5

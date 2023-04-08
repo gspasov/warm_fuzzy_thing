@@ -5,9 +5,9 @@ defmodule Monad.Maybe do
   Otherwise `Maybe` holds onto a `nil` value (for the situations where there isn't a value).
 
   ## Example
-      iex> Monad.Maybe.map({:ok, 1}, fn v -> v + 1 end)
+      iex> Monad.Maybe.fmap({:ok, 1}, fn v -> v + 1 end)
       {:ok, 2}
-      iex> Monad.Maybe.map(nil, fn v -> v + 1 end)
+      iex> Monad.Maybe.fmap(nil, fn v -> v + 1 end)
       nil
       iex> Monad.Maybe.bind({:ok, 1}, fn v -> {:ok, v + 1} end)
       {:ok, 2}
@@ -17,33 +17,67 @@ defmodule Monad.Maybe do
       nil
   """
 
+  @behaviour Monad
+
   alias Monad.Maybe
 
   @type t(value) :: nil | {:ok, value}
+
+  @doc """
+  Checks whether a `Maybe` monad is `'nothing'` (_essentially empty_)
+
+  ## Example
+    iex> import Monad.Maybe
+    iex> nothing?(nil)
+    true
+    iex> nothing?({:ok, 1})
+    false
+  """
+  defmacro nothing?(nil), do: quote(do: true)
+  defmacro nothing?(_), do: quote(do: false)
+
+  @doc """
+  Checks whether a `Maybe` monad is a `'just'`
+
+  ## Example
+    iex> import Monad.Maybe
+    iex> just?({:ok, 1})
+    true
+    iex> just?(nil)
+    false
+  """
+  defmacro just?({:ok, _value}), do: quote(do: true)
+  defmacro just?(_), do: quote(do: false)
+
+  @impl true
+  @spec pure(nil | value) :: Maybe.t(value) when value: any()
+  def pure(nil), do: nil
+  def pure(value), do: {:ok, value}
 
   @doc """
   Apply a function over the `'just'` portion of a `Maybe` monad.
   The result of the function will be the `new` `'just'` portion of the `Maybe` Monad.
 
   If a `Maybe` monad with a `'nothing'` value is passed, the function is not invoked,
-  `Monad.Maybe.map/2` return a `nil`.
+  `Monad.Maybe.fmap/2` return a `nil`.
 
   ## Example
-      iex> Monad.Maybe.map({:ok, 1}, fn v -> v + 1 end)
+      iex> Monad.Maybe.fmap({:ok, 1}, fn v -> v + 1 end)
       {:ok, 2}
-      iex> Monad.Maybe.map({:ok, "hello"}, fn _v -> "world" end)
+      iex> Monad.Maybe.fmap({:ok, "hello"}, fn _v -> "world" end)
       {:ok, "world"}
-      iex> Monad.Maybe.map({:ok, "hello"}, &String.length/1)
+      iex> Monad.Maybe.fmap({:ok, "hello"}, &String.length/1)
       {:ok, 5}
-      iex> Monad.Maybe.map(nil, fn v -> v + 1 end)
+      iex> Monad.Maybe.fmap(nil, fn v -> v + 1 end)
       nil
   """
-  @spec map(Maybe.t(value), function) :: Maybe.t(new_value)
+  @impl true
+  @spec fmap(Maybe.t(value), function) :: Maybe.t(new_value)
         when value: any(),
              function: (value -> new_value),
              new_value: any()
-  def map(nil, _f), do: nil
-  def map({:ok, value}, f) when is_function(f), do: {:ok, f.(value)}
+  def fmap(nil, _f), do: nil
+  def fmap({:ok, value}, f) when is_function(f), do: {:ok, f.(value)}
 
   @doc """
   Apply a function over the `'just'` portion of a `Maybe` monad.
@@ -65,6 +99,7 @@ defmodule Monad.Maybe do
       iex> Monad.Maybe.bind(nil, fn v -> v + 1 end)
       nil
   """
+  @impl true
   @spec bind(Maybe.t(value), function) :: new_maybe
         when value: any(),
              function: (value -> new_maybe),
@@ -96,7 +131,10 @@ defmodule Monad.Maybe do
       nil
       iex> Monad.Maybe.fold(nil, :not_found, fn v -> v + 1 end)
       :not_found
+      iex> Monad.Maybe.sequence([])
+      {:ok, []}
   """
+  @impl true
   @spec fold(Maybe.t(value), default :: new_value, function) :: new_value
         when value: any(),
              function: (value -> new_value),
@@ -105,6 +143,39 @@ defmodule Monad.Maybe do
 
   def fold(nil, default, _f), do: default
   def fold({:ok, value}, _default, f) when is_function(f), do: f.(value)
+
+  @doc """
+  Cycles through a sequence of `Maybe`s, if it finds an empty `Maybe` it short circuits
+  and returns an "empty" `Maybe`.
+
+  Otherwise returns a `Maybe` with a list of all values.
+
+  ## Example
+      iex> Monad.Maybe.sequence([{:ok, 1}, {:ok, 2}])
+      {:ok, [1, 2]}
+      iex> Monad.Maybe.sequence([])
+      {:ok, []}
+      iex> Monad.Maybe.sequence([{:ok, 1}, nil, {:ok, 2}])
+      nil
+      iex> Monad.Maybe.sequence([nil])
+      nil
+  """
+  @impl true
+  @spec sequence([Maybe.t(value)]) :: Maybe.t([value]) when value: any()
+  def sequence([]), do: {:ok, []}
+
+  def sequence(maybes) do
+    maybes
+    |> Enum.reduce_while([], fn
+      nil, _acc -> {:halt, nil}
+      {:ok, value}, acc -> {:cont, [value | acc]}
+    end)
+    |> case do
+      nil -> nil
+      acc -> Enum.reverse(acc)
+    end
+    |> Maybe.pure()
+  end
 
   @doc """
   Call a 'void' type of function if the `Maybe` monad is a `'nothing'`.
@@ -157,7 +228,7 @@ defmodule Monad.Maybe do
   end
 
   @doc """
-  Operator for handling `Monad.Maybe.map/2`.
+  Operator for handling `Monad.Maybe.fmap/2`.
 
   ## Example
       iex> import Monad.Maybe, only: [~>: 2]

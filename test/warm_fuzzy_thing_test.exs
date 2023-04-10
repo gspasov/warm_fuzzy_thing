@@ -1,11 +1,11 @@
-defmodule MonadTest do
+defmodule WarmFuzzyThingTest do
   use ExUnit.Case
-  doctest Monad
-  doctest Monad.Either
-  doctest Monad.Maybe
+  doctest WarmFuzzyThing
+  doctest WarmFuzzyThing.Either
+  doctest WarmFuzzyThing.Maybe
 
-  alias Monad.Maybe
-  alias Monad.Either
+  alias WarmFuzzyThing.Maybe
+  alias WarmFuzzyThing.Either
 
   describe "Maybe" do
     test "map" do

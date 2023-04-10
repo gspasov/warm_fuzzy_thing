@@ -1,4 +1,4 @@
-defmodule Monad.Either do
+defmodule WarmFuzzyThing.Either do
   @moduledoc """
   The `Either` monad is a union between two general notions: `Left` and `Right` (_the naming is inherited from Haskell and it depicts the idea: "Either I have this or I have that."_).
   This means that an `Either` monad can either be a `Left` or it can be a `Right` (_think of it as a simple `union` between two types_).
@@ -7,48 +7,48 @@ defmodule Monad.Either do
   Generally a `Right` `Either` represents a successful transformation/operation where as a `Left` `Either` represents an unsuccessful one.
 
   `Either` exports a set of function for ease of chaining functions (_transformations_):
-    - `Monad.Either.fmap/2` - Used for applying a function over the value of a `Either` monad;
-    - `Monad.Either.bind/2` - Used for applying a function over a value inside a `Either` monad that returns a brand new `Either` monad;
-    - `Monad.Either.fold/3` - Used for either returning a default value or applying a function over the value inside the `Either` monad;
+    - `WarmFuzzyThing.Either.fmap/2` - Used for applying a function over the value of a `Either` monad;
+    - `WarmFuzzyThing.Either.bind/2` - Used for applying a function over a value inside a `Either` monad that returns a brand new `Either` monad;
+    - `WarmFuzzyThing.Either.fold/3` - Used for either returning a default value or applying a function over the value inside the `Either` monad;
 
   ## Example
-      iex> Monad.Either.fmap({:ok, 1}, fn v -> v + 1 end)
+      iex> WarmFuzzyThing.Either.fmap({:ok, 1}, fn v -> v + 1 end)
       {:ok, 2}
-      iex> Monad.Either.fmap({:error, :not_found}, fn v -> v + 1 end)
+      iex> WarmFuzzyThing.Either.fmap({:error, :not_found}, fn v -> v + 1 end)
       {:error, :not_found}
-      iex> Monad.Either.bind({:ok, 1}, fn v -> {:ok, v + 1} end)
+      iex> WarmFuzzyThing.Either.bind({:ok, 1}, fn v -> {:ok, v + 1} end)
       {:ok, 2}
-      iex> Monad.Either.bind({:error, :not_found}, fn v -> {:ok, v + 1} end)
+      iex> WarmFuzzyThing.Either.bind({:error, :not_found}, fn v -> {:ok, v + 1} end)
       {:error, :not_found}
-      iex> Monad.Either.bind({:ok, 1}, fn v -> {:error, :not_found} end)
+      iex> WarmFuzzyThing.Either.bind({:ok, 1}, fn v -> {:error, :not_found} end)
       {:error, :not_found}
-      iex> Monad.Either.fold({:ok, 1}, &Monad.id/1)
+      iex> WarmFuzzyThing.Either.fold({:ok, 1}, &WarmFuzzyThing.id/1)
       1
-      iex> Monad.Either.fold({:error, :not_found}, &Monad.id/1)
+      iex> WarmFuzzyThing.Either.fold({:error, :not_found}, &WarmFuzzyThing.id/1)
       nil
-      iex> Monad.Either.fold({:error, :not_found}, :empty, &Monad.id/1)
+      iex> WarmFuzzyThing.Either.fold({:error, :not_found}, :empty, &WarmFuzzyThing.id/1)
       :empty
 
   This set of function are setup in a way to allow for easy pipelining.
 
   ## Example
       iex> {:ok, "elixir"}
-      ...> |> Monad.Either.fmap(fn v -> v <> " with monads" end)
-      ...> |> Monad.Either.fmap(&String.length/1)
-      ...> |> Monad.Either.bind(fn
+      ...> |> WarmFuzzyThing.Either.fmap(fn v -> v <> " with monads" end)
+      ...> |> WarmFuzzyThing.Either.fmap(&String.length/1)
+      ...> |> WarmFuzzyThing.Either.bind(fn
       ...>    v when v <= 20 -> {:ok, v}
       ...>    _ -> {:error, :too_big}
       ...>  end)
-      ...> |> Monad.Either.fold(&Monad.id/1)
+      ...> |> WarmFuzzyThing.Either.fold(&WarmFuzzyThing.id/1)
       18
 
   `Either` exports a set of operators for handling the chaining functions:
-    - `~>` represents `Monad.Either.fmap/2`
-    - `~>>` represents `Monad.Either.bind/2`
-    - `<~>` represents `Monad.Either.fold/3`
+    - `~>` represents `WarmFuzzyThing.Either.fmap/2`
+    - `~>>` represents `WarmFuzzyThing.Either.bind/2`
+    - `<~>` represents `WarmFuzzyThing.Either.fold/3`
 
   ## Example
-      iex> import Monad.Either, only: [~>: 2, ~>>: 2, <~>: 2]
+      iex> import WarmFuzzyThing.Either, only: [~>: 2, ~>>: 2, <~>: 2]
       iex> {:ok, "elixir"} ~> &String.length/1
       {:ok, 6}
       iex> {:error, :not_found} ~> &String.length/1
@@ -69,13 +69,13 @@ defmodule Monad.Either do
       ...> ~> fn v -> v <> " with monads" end
       ...> ~> fn v -> v <> " is awesome" end
       ...> ~>> fn v when v < 20 -> {:error, :too_short}; v -> {:ok, String.length(v)} end
-      ...> <~> {0, &Monad.id/1}
+      ...> <~> {0, &WarmFuzzyThing.id/1}
       29
   """
 
-  @behaviour Monad
+  @behaviour WarmFuzzyThing
 
-  alias Monad.Either
+  alias WarmFuzzyThing.Either
 
   @type t(reason, value) :: {:error, reason} | {:ok, value}
 
@@ -83,7 +83,7 @@ defmodule Monad.Either do
   Checks whether a `Either` monad is `'left'`
 
   ## Example
-    iex> import Monad.Either
+    iex> import WarmFuzzyThing.Either
     iex> left?({:error, :empty})
     true
     iex> left?({:ok, 1})
@@ -96,7 +96,7 @@ defmodule Monad.Either do
   Checks whether a `Either` monad is `'right'`
 
   ## Example
-    iex> import Monad.Either
+    iex> import WarmFuzzyThing.Either
     iex> right?({:ok, 1})
     true
     iex> right?({:error, :empty})
@@ -115,16 +115,16 @@ defmodule Monad.Either do
   The result of the function will be the `new` `'right'` portion of the `Either` monad.
 
   If an `Either` monad with a `'left'` value is passed, the function is not invoked,
-  `Monad.Either.map/2` just return the `'left'` value.
+  `WarmFuzzyThing.Either.map/2` just return the `'left'` value.
 
   ## Example
-      iex> Monad.Either.fmap({:ok, 1}, fn v -> v + 1 end)
+      iex> WarmFuzzyThing.Either.fmap({:ok, 1}, fn v -> v + 1 end)
       {:ok, 2}
-      iex> Monad.Either.fmap({:ok, "hello"}, fn _v -> "world" end)
+      iex> WarmFuzzyThing.Either.fmap({:ok, "hello"}, fn _v -> "world" end)
       {:ok, "world"}
-      iex> Monad.Either.fmap({:ok, "hello"}, &String.length/1)
+      iex> WarmFuzzyThing.Either.fmap({:ok, "hello"}, &String.length/1)
       {:ok, 5}
-      iex> Monad.Either.fmap({:error, :not_a_number}, fn v -> v + 1 end)
+      iex> WarmFuzzyThing.Either.fmap({:error, :not_a_number}, fn v -> v + 1 end)
       {:error, :not_a_number}
   """
   @impl true
@@ -144,18 +144,18 @@ defmodule Monad.Either do
   This means that the value inside the monad can change from `'left'` to `'right'` and vice versa.
 
   If an `Either` monad with a `'left'` value is passed, the function is not invoked,
-  `Monad.Either.bind/2` just return the `'left'` value.
+  `WarmFuzzyThing.Either.bind/2` just return the `'left'` value.
 
   ## Example
-      iex> Monad.Either.bind({:ok, 1}, fn v -> {:ok, v + 1} end)
+      iex> WarmFuzzyThing.Either.bind({:ok, 1}, fn v -> {:ok, v + 1} end)
       {:ok, 2}
-      iex> Monad.Either.bind({:ok, "hello"}, fn _v -> {:ok, "world"} end)
+      iex> WarmFuzzyThing.Either.bind({:ok, "hello"}, fn _v -> {:ok, "world"} end)
       {:ok, "world"}
-      iex> Monad.Either.bind({:ok, "hello"}, &({:ok, String.length(&1)}))
+      iex> WarmFuzzyThing.Either.bind({:ok, "hello"}, &({:ok, String.length(&1)}))
       {:ok, 5}
-      iex> Monad.Either.bind({:ok, "hello"}, fn _v -> {:error, "something went wrong"} end)
+      iex> WarmFuzzyThing.Either.bind({:ok, "hello"}, fn _v -> {:error, "something went wrong"} end)
       {:error, "something went wrong"}
-      iex> Monad.Either.fmap({:error, :not_a_number}, fn v -> {:ok, v + 1} end)
+      iex> WarmFuzzyThing.Either.fmap({:error, :not_a_number}, fn v -> {:ok, v + 1} end)
       {:error, :not_a_number}
   """
   @impl true
@@ -184,15 +184,15 @@ defmodule Monad.Either do
     - Return the `'default'` value given to the function. If no `'default'` value is provided, `nil` is returned;
 
   ## Example
-      iex> Monad.Either.fold({:ok, 1}, fn v -> v + 1 end)
+      iex> WarmFuzzyThing.Either.fold({:ok, 1}, fn v -> v + 1 end)
       2
-      iex> Monad.Either.fold({:ok, "hello"}, fn _v -> "world" end)
+      iex> WarmFuzzyThing.Either.fold({:ok, "hello"}, fn _v -> "world" end)
       "world"
-      iex> Monad.Either.fold({:ok, "hello"}, &String.length/1)
+      iex> WarmFuzzyThing.Either.fold({:ok, "hello"}, &String.length/1)
       5
-      iex> Monad.Either.fold({:error, :not_a_number}, fn v -> v + 1 end)
+      iex> WarmFuzzyThing.Either.fold({:error, :not_a_number}, fn v -> v + 1 end)
       nil
-      iex> Monad.Either.fold({:error, :not_a_number}, :not_found, fn v -> v + 1 end)
+      iex> WarmFuzzyThing.Either.fold({:error, :not_a_number}, :not_found, fn v -> v + 1 end)
       :not_found
   """
   @impl true
@@ -212,13 +212,13 @@ defmodule Monad.Either do
   Otherwise returns a `Either` with a list of all values.
 
   ## Example
-      iex> Monad.Either.sequence([{:ok, 1}, {:ok, 2}])
+      iex> WarmFuzzyThing.Either.sequence([{:ok, 1}, {:ok, 2}])
       {:ok, [1, 2]}
-      iex> Monad.Either.sequence([])
+      iex> WarmFuzzyThing.Either.sequence([])
       {:ok, []}
-      iex> Monad.Either.sequence([{:ok, 1}, {:error, :not_found}, {:ok, 2}])
+      iex> WarmFuzzyThing.Either.sequence([{:ok, 1}, {:error, :not_found}, {:ok, 2}])
       {:error, :not_found}
-      iex> Monad.Either.sequence([{:error, :not_found}, {:error, :empty}])
+      iex> WarmFuzzyThing.Either.sequence([{:error, :not_found}, {:error, :empty}])
       {:error, :not_found}
   """
   @impl true
@@ -243,14 +243,14 @@ defmodule Monad.Either do
 
   @doc """
   Call a 'void' type of function if the `Either` monad is a `'left'`.
-  `Monad.Either.on_left/2` returns the `Either` as is. No changes are applied.
+  `WarmFuzzyThing.Either.on_left/2` returns the `Either` as is. No changes are applied.
 
   _If the `Either` has a `'right'` value inside, the function is not invoked._
 
   ## Example
-      iex> Monad.Either.on_left({:ok, 1}, &IO.inspect/1)
+      iex> WarmFuzzyThing.Either.on_left({:ok, 1}, &IO.inspect/1)
       {:ok, 1}
-      iex> Monad.Either.on_left({:error, :not_a_number}, &IO.inspect/1)
+      iex> WarmFuzzyThing.Either.on_left({:error, :not_a_number}, &IO.inspect/1)
       :not_a_number
       {:error, :not_a_number}
   """
@@ -269,15 +269,15 @@ defmodule Monad.Either do
 
   @doc """
   Call a 'void' type of function if the `Either` monad is a `'right'`.
-  `Monad.Either.on_right/2` returns the `Either` as is. No changes are applied.
+  `WarmFuzzyThing.Either.on_right/2` returns the `Either` as is. No changes are applied.
 
   _If the `Either` has a `'left'` value inside, the function is not invoked._
 
   ## Example
-      iex> Monad.Either.on_right({:ok, 1}, &IO.inspect/1)
+      iex> WarmFuzzyThing.Either.on_right({:ok, 1}, &IO.inspect/1)
       1
       {:ok, 1}
-      iex> Monad.Either.on_right({:error, :not_a_number}, &IO.inspect/1)
+      iex> WarmFuzzyThing.Either.on_right({:error, :not_a_number}, &IO.inspect/1)
       {:error, :not_a_number}
   """
   @spec on_right(Either.t(reason, value), function) :: Either.t(reason, value)
@@ -299,9 +299,9 @@ defmodule Monad.Either do
   Useful when you want to change the structure of the reason.
 
   ## Example
-      iex> Monad.Either.map_left({:ok, 1}, fn reason -> {:operation, reason} end)
+      iex> WarmFuzzyThing.Either.map_left({:ok, 1}, fn reason -> {:operation, reason} end)
       {:ok, 1}
-      iex> Monad.Either.map_left({:error, :not_found}, fn reason -> {:user, reason} end)
+      iex> WarmFuzzyThing.Either.map_left({:error, :not_found}, fn reason -> {:user, reason} end)
       {:error, {:user, :not_found}}
   """
   @spec map_left(Either.t(reason, value), (reason -> new_reason)) :: Either.t(new_reason, value)
@@ -317,10 +317,10 @@ defmodule Monad.Either do
   end
 
   @doc """
-  Operator for handling `Monad.Either.map/2`.
+  Operator for handling `WarmFuzzyThing.Either.map/2`.
 
   ## Example
-      iex> import Monad.Either, only: [~>: 2]
+      iex> import WarmFuzzyThing.Either, only: [~>: 2]
       iex> {:ok, 1} ~> fn v -> v + 1 end
       {:ok, 2}
       iex> {:ok, "hello"} ~> fn _v -> "world" end
@@ -339,10 +339,10 @@ defmodule Monad.Either do
   def {:ok, value} ~> f when is_function(f), do: {:ok, f.(value)}
 
   @doc """
-  Operator for handling `Monad.Either.bind/2`.
+  Operator for handling `WarmFuzzyThing.Either.bind/2`.
 
   ## Example
-      iex> import Monad.Either, only: [~>>: 2]
+      iex> import WarmFuzzyThing.Either, only: [~>>: 2]
       iex> {:ok, 1} ~>> fn v -> {:ok, v + 1} end
       {:ok, 2}
       iex> {:ok, "hello"} ~>> fn _v -> {:ok, "world"} end
@@ -372,10 +372,10 @@ defmodule Monad.Either do
   end
 
   @doc """
-  Operator for handling `Monad.Either.fold/3`.
+  Operator for handling `WarmFuzzyThing.Either.fold/3`.
 
   ## Example
-      iex> import Monad.Either, only: [<~>: 2]
+      iex> import WarmFuzzyThing.Either, only: [<~>: 2]
       iex> {:ok, 1} <~> fn v -> v + 1 end
       2
       iex> {:ok, "hello"} <~> fn _v -> "world" end
@@ -399,6 +399,6 @@ defmodule Monad.Either do
   def {:ok, value} <~> f when is_function(f), do: f.(value)
 
   defp bind_exception(other) do
-    "Function provided to `Monad.Either.bind/2` should return an `Either.t(any(), any())` type, got #{inspect(other)}"
+    "Function provided to `WarmFuzzyThing.Either.bind/2` should return an `Either.t(any(), any())` type, got #{inspect(other)}"
   end
 end

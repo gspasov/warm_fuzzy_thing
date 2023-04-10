@@ -1,4 +1,4 @@
-defmodule Monad.Maybe do
+defmodule WarmFuzzyThing.Maybe do
   @moduledoc """
   The `Maybe` monad is a union between two general notions: `Just` and `Nothing` (_the naming is inherited from Haskell and it depicts the idea: "Maybe I have a value, maybe I don't."_).
   This means that a `Maybe` monad can either be a `Just` or it can be a `Nothing` (_think of it as a simple `union` between two types_).
@@ -6,48 +6,48 @@ defmodule Monad.Maybe do
   where as a `Nothing` is represented by `nil`, since it's the closest Elixir gets to representing "nothing".
 
   `Maybe` exports a set of function for ease of chaining functions (_transformations_):
-    - `Monad.Maybe.fmap/2` - Used for applying a function over the value of a `Maybe` monad;
-    - `Monad.Maybe.bind/2` - Used for applying a function over a value inside a `Maybe` monad that returns a brand new `Maybe` monad;
-    - `Monad.Maybe.fold/3` - Used for either returning a default value or applying a function over the value inside the `Maybe` monad;
+    - `WarmFuzzyThing.Maybe.fmap/2` - Used for applying a function over the value of a `Maybe` monad;
+    - `WarmFuzzyThing.Maybe.bind/2` - Used for applying a function over a value inside a `Maybe` monad that returns a brand new `Maybe` monad;
+    - `WarmFuzzyThing.Maybe.fold/3` - Used for either returning a default value or applying a function over the value inside the `Maybe` monad;
 
   ## Example
-      iex> Monad.Maybe.fmap({:ok, 1}, fn v -> v + 1 end)
+      iex> WarmFuzzyThing.Maybe.fmap({:ok, 1}, fn v -> v + 1 end)
       {:ok, 2}
-      iex> Monad.Maybe.fmap(nil, fn v -> v + 1 end)
+      iex> WarmFuzzyThing.Maybe.fmap(nil, fn v -> v + 1 end)
       nil
-      iex> Monad.Maybe.bind({:ok, 1}, fn v -> {:ok, v + 1} end)
+      iex> WarmFuzzyThing.Maybe.bind({:ok, 1}, fn v -> {:ok, v + 1} end)
       {:ok, 2}
-      iex> Monad.Maybe.bind(nil, fn v -> {:ok, v + 1} end)
+      iex> WarmFuzzyThing.Maybe.bind(nil, fn v -> {:ok, v + 1} end)
       nil
-      iex> Monad.Maybe.bind({:ok, 1}, fn v -> nil end)
+      iex> WarmFuzzyThing.Maybe.bind({:ok, 1}, fn v -> nil end)
       nil
-      iex> Monad.Maybe.fold({:ok, 1}, &Monad.id/1)
+      iex> WarmFuzzyThing.Maybe.fold({:ok, 1}, &WarmFuzzyThing.id/1)
       1
-      iex> Monad.Maybe.fold(nil, &Monad.id/1)
+      iex> WarmFuzzyThing.Maybe.fold(nil, &WarmFuzzyThing.id/1)
       nil
-      iex> Monad.Maybe.fold(nil, :empty, &Monad.id/1)
+      iex> WarmFuzzyThing.Maybe.fold(nil, :empty, &WarmFuzzyThing.id/1)
       :empty
 
   This set of function are setup in a way to allow for easy pipelining.
 
   ## Example
       iex> {:ok, "hello"}
-      ...> |> Monad.Maybe.fmap(fn v -> v <> " world" end)
-      ...> |> Monad.Maybe.fmap(&String.length/1)
-      ...> |> Monad.Maybe.bind(fn
+      ...> |> WarmFuzzyThing.Maybe.fmap(fn v -> v <> " world" end)
+      ...> |> WarmFuzzyThing.Maybe.fmap(&String.length/1)
+      ...> |> WarmFuzzyThing.Maybe.bind(fn
       ...>    v when v <= 20 -> {:ok, v}
       ...>    _ -> nil
       ...>  end)
-      ...> |> Monad.Maybe.fold(&Monad.id/1)
+      ...> |> WarmFuzzyThing.Maybe.fold(&WarmFuzzyThing.id/1)
       11
 
   `Maybe` exports a set of operators for handling the chaining functions:
-    - `~>` represents `Monad.Maybe.fmap/2`
-    - `~>>` represents `Monad.Maybe.bind/2`
-    - `<~>` represents `Monad.Maybe.fold/3`
+    - `~>` represents `WarmFuzzyThing.Maybe.fmap/2`
+    - `~>>` represents `WarmFuzzyThing.Maybe.bind/2`
+    - `<~>` represents `WarmFuzzyThing.Maybe.fold/3`
 
   ## Example
-      iex> import Monad.Maybe, only: [~>: 2, ~>>: 2, <~>: 2]
+      iex> import WarmFuzzyThing.Maybe, only: [~>: 2, ~>>: 2, <~>: 2]
       iex> {:ok, "elixir"} ~> &String.length/1
       {:ok, 6}
       iex> nil ~> &String.length/1
@@ -68,13 +68,13 @@ defmodule Monad.Maybe do
       ...> ~> fn v -> v <> " with monads" end
       ...> ~> fn v -> v <> " is awesome" end
       ...> ~>> fn v when v < 20 -> nil; v -> {:ok, String.length(v)} end
-      ...> <~> {0, &Monad.id/1}
+      ...> <~> {0, &WarmFuzzyThing.id/1}
       29
   """
 
-  @behaviour Monad
+  @behaviour WarmFuzzyThing
 
-  alias Monad.Maybe
+  alias WarmFuzzyThing.Maybe
 
   @type t(value) :: nil | {:ok, value}
 
@@ -82,7 +82,7 @@ defmodule Monad.Maybe do
   Checks whether a `Maybe` monad is `Nothing` (_essentially empty_)
 
   ## Example
-    iex> import Monad.Maybe
+    iex> import WarmFuzzyThing.Maybe
     iex> nothing?(nil)
     true
     iex> nothing?({:ok, 1})
@@ -95,7 +95,7 @@ defmodule Monad.Maybe do
   Checks whether a `Maybe` monad is a `Just`
 
   ## Example
-    iex> import Monad.Maybe
+    iex> import WarmFuzzyThing.Maybe
     iex> just?({:ok, 1})
     true
     iex> just?(nil)
@@ -111,19 +111,19 @@ defmodule Monad.Maybe do
 
   @doc """
   Apply a function over the `Just` portion of a `Maybe` monad.
-  The result of the function will be the `new` `Just` portion of the `Maybe` Monad.
+  The result of the function will be the `new` `Just` portion of the `Maybe` WarmFuzzyThing.
 
   If a `Maybe` monad with a `Nothing` value is passed, the function is not invoked,
-  `Monad.Maybe.fmap/2` return a `nil`.
+  `WarmFuzzyThing.Maybe.fmap/2` return a `nil`.
 
   ## Example
-      iex> Monad.Maybe.fmap({:ok, 1}, fn v -> v + 1 end)
+      iex> WarmFuzzyThing.Maybe.fmap({:ok, 1}, fn v -> v + 1 end)
       {:ok, 2}
-      iex> Monad.Maybe.fmap({:ok, "hello"}, fn _v -> "world" end)
+      iex> WarmFuzzyThing.Maybe.fmap({:ok, "hello"}, fn _v -> "world" end)
       {:ok, "world"}
-      iex> Monad.Maybe.fmap({:ok, "hello"}, &String.length/1)
+      iex> WarmFuzzyThing.Maybe.fmap({:ok, "hello"}, &String.length/1)
       {:ok, 5}
-      iex> Monad.Maybe.fmap(nil, fn v -> v + 1 end)
+      iex> WarmFuzzyThing.Maybe.fmap(nil, fn v -> v + 1 end)
       nil
   """
   @impl true
@@ -140,18 +140,18 @@ defmodule Monad.Maybe do
   This means that the value inside the monad can change from `Just` to `Nothing` and vice versa.
 
   If a `Maybe` monad with a `Nothing` value is passed, the function is not invoked,
-  `Monad.Maybe.bind/2` return a `nil`.
+  `WarmFuzzyThing.Maybe.bind/2` return a `nil`.
 
   ## Example
-      iex> Monad.Maybe.bind({:ok, 1}, fn v -> {:ok, v + 1} end)
+      iex> WarmFuzzyThing.Maybe.bind({:ok, 1}, fn v -> {:ok, v + 1} end)
       {:ok, 2}
-      iex> Monad.Maybe.bind({:ok, "hello"}, fn _v -> {:ok, "world"} end)
+      iex> WarmFuzzyThing.Maybe.bind({:ok, "hello"}, fn _v -> {:ok, "world"} end)
       {:ok, "world"}
-      iex> Monad.Maybe.bind({:ok, "hello"}, &({:ok, String.length(&1)}))
+      iex> WarmFuzzyThing.Maybe.bind({:ok, "hello"}, &({:ok, String.length(&1)}))
       {:ok, 5}
-      iex> Monad.Maybe.bind({:ok, "hello"}, fn _v -> nil end)
+      iex> WarmFuzzyThing.Maybe.bind({:ok, "hello"}, fn _v -> nil end)
       nil
-      iex> Monad.Maybe.bind(nil, fn v -> v + 1 end)
+      iex> WarmFuzzyThing.Maybe.bind(nil, fn v -> v + 1 end)
       nil
   """
   @impl true
@@ -176,17 +176,17 @@ defmodule Monad.Maybe do
     - Return the `'default'` value given to the function. If no `'default'` value is provided, `nil` is returned;
 
   ## Example
-      iex> Monad.Maybe.fold({:ok, 1}, fn v -> v + 1 end)
+      iex> WarmFuzzyThing.Maybe.fold({:ok, 1}, fn v -> v + 1 end)
       2
-      iex> Monad.Maybe.fold({:ok, "hello"}, fn _v -> "world" end)
+      iex> WarmFuzzyThing.Maybe.fold({:ok, "hello"}, fn _v -> "world" end)
       "world"
-      iex> Monad.Maybe.fold({:ok, "hello"}, &String.length/1)
+      iex> WarmFuzzyThing.Maybe.fold({:ok, "hello"}, &String.length/1)
       5
-      iex> Monad.Maybe.fold(nil, fn v -> v + 1 end)
+      iex> WarmFuzzyThing.Maybe.fold(nil, fn v -> v + 1 end)
       nil
-      iex> Monad.Maybe.fold(nil, :not_found, fn v -> v + 1 end)
+      iex> WarmFuzzyThing.Maybe.fold(nil, :not_found, fn v -> v + 1 end)
       :not_found
-      iex> Monad.Maybe.sequence([])
+      iex> WarmFuzzyThing.Maybe.sequence([])
       {:ok, []}
   """
   @impl true
@@ -206,13 +206,13 @@ defmodule Monad.Maybe do
   Otherwise returns a `Maybe` with a list of all values.
 
   ## Example
-      iex> Monad.Maybe.sequence([{:ok, 1}, {:ok, 2}])
+      iex> WarmFuzzyThing.Maybe.sequence([{:ok, 1}, {:ok, 2}])
       {:ok, [1, 2]}
-      iex> Monad.Maybe.sequence([])
+      iex> WarmFuzzyThing.Maybe.sequence([])
       {:ok, []}
-      iex> Monad.Maybe.sequence([{:ok, 1}, nil, {:ok, 2}])
+      iex> WarmFuzzyThing.Maybe.sequence([{:ok, 1}, nil, {:ok, 2}])
       nil
-      iex> Monad.Maybe.sequence([nil])
+      iex> WarmFuzzyThing.Maybe.sequence([nil])
       nil
   """
   @impl true
@@ -234,14 +234,14 @@ defmodule Monad.Maybe do
 
   @doc """
   Call a 'void' type of function if the `Maybe` monad is a `Nothing`.
-  `Monad.Maybe.on_nothing/2` returns the `Maybe` as is. No changes are applied.
+  `WarmFuzzyThing.Maybe.on_nothing/2` returns the `Maybe` as is. No changes are applied.
 
   _If the `Maybe` has a `'right'` value inside, the function is not invoked._
 
   ## Example
-      iex> Monad.Maybe.on_nothing({:ok, 1}, &IO.inspect/1)
+      iex> WarmFuzzyThing.Maybe.on_nothing({:ok, 1}, &IO.inspect/1)
       {:ok, 1}
-      iex> Monad.Maybe.on_nothing(nil, fn -> IO.inspect("Empty maybe monad") end)
+      iex> WarmFuzzyThing.Maybe.on_nothing(nil, fn -> IO.inspect("Empty maybe monad") end)
       "Empty maybe monad"
       nil
   """
@@ -260,15 +260,15 @@ defmodule Monad.Maybe do
 
   @doc """
   Call a 'void' type of function if the `Maybe` monad is a `Just`.
-  `Monad.Maybe.on_just/2` returns the `Maybe` as is. No changes are applied.
+  `WarmFuzzyThing.Maybe.on_just/2` returns the `Maybe` as is. No changes are applied.
 
   _If the `Maybe` has a `Nothing` value inside, the function is not invoked._
 
   ## Example
-      iex> Monad.Maybe.on_just({:ok, 1}, &IO.inspect/1)
+      iex> WarmFuzzyThing.Maybe.on_just({:ok, 1}, &IO.inspect/1)
       1
       {:ok, 1}
-      iex> Monad.Maybe.on_just(nil, &IO.inspect/1)
+      iex> WarmFuzzyThing.Maybe.on_just(nil, &IO.inspect/1)
       nil
   """
   @spec on_just(Maybe.t(value), function) :: Maybe.t(value)
@@ -283,10 +283,10 @@ defmodule Monad.Maybe do
   end
 
   @doc """
-  Operator for handling `Monad.Maybe.fmap/2`.
+  Operator for handling `WarmFuzzyThing.Maybe.fmap/2`.
 
   ## Example
-      iex> import Monad.Maybe, only: [~>: 2]
+      iex> import WarmFuzzyThing.Maybe, only: [~>: 2]
       iex> {:ok, 1} ~> fn v -> v + 1 end
       {:ok, 2}
       iex> {:ok, "hello"} ~> fn _v -> "world" end
@@ -304,10 +304,10 @@ defmodule Monad.Maybe do
   def {:ok, value} ~> f when is_function(f), do: {:ok, f.(value)}
 
   @doc """
-  Operator for handling `Monad.Maybe.bind/2`.
+  Operator for handling `WarmFuzzyThing.Maybe.bind/2`.
 
   ## Example
-      iex> import Monad.Maybe, only: [~>>: 2]
+      iex> import WarmFuzzyThing.Maybe, only: [~>>: 2]
       iex> {:ok, 1} ~>> fn v -> {:ok, v + 1} end
       {:ok, 2}
       iex> {:ok, "hello"} ~>> fn _v -> {:ok, "world"} end
@@ -335,10 +335,10 @@ defmodule Monad.Maybe do
   end
 
   @doc """
-  Operator for handling `Monad.Maybe.fold/3`.
+  Operator for handling `WarmFuzzyThing.Maybe.fold/3`.
 
   ## Example
-      iex> import Monad.Maybe, only: [<~>: 2]
+      iex> import WarmFuzzyThing.Maybe, only: [<~>: 2]
       iex> {:ok, 1} <~> fn v -> v + 1 end
       2
       iex> {:ok, "hello"} <~> fn _v -> "world" end
@@ -360,6 +360,6 @@ defmodule Monad.Maybe do
   def {:ok, value} <~> f when is_function(f), do: f.(value)
 
   defp bind_exception(other) do
-    "Function provided to `Monad.Maybe.bind/2` should return an `Maybe.t(any())` type, got #{inspect(other)}"
+    "Function provided to `WarmFuzzyThing.Maybe.bind/2` should return an `Maybe.t(any())` type, got #{inspect(other)}"
   end
 end

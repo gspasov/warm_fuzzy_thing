@@ -166,7 +166,6 @@ defmodule WarmFuzzyThing.Maybe do
     case f.(value) do
       nil -> nil
       {:ok, value} -> {:ok, value}
-      other -> raise(bind_exception(other))
     end
   end
 
@@ -330,7 +329,6 @@ defmodule WarmFuzzyThing.Maybe do
     case f.(value) do
       nil -> nil
       {:ok, value} -> {:ok, value}
-      other -> raise(bind_exception(other))
     end
   end
 
@@ -358,8 +356,4 @@ defmodule WarmFuzzyThing.Maybe do
   def nil <~> f when is_function(f), do: nil
   def {:ok, value} <~> {_default, f} when is_function(f), do: f.(value)
   def {:ok, value} <~> f when is_function(f), do: f.(value)
-
-  defp bind_exception(other) do
-    "Function provided to `WarmFuzzyThing.Maybe.bind/2` should return an `Maybe.t(any())` type, got #{inspect(other)}"
-  end
 end

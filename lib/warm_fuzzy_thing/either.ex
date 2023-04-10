@@ -172,9 +172,11 @@ defmodule WarmFuzzyThing.Either do
 
   def bind({:ok, value}, f) when is_function(f) do
     case f.(value) do
-      {:ok, value} -> {:ok, value}
-      {:error, reason} -> {:error, reason}
-      other -> raise(bind_exception(other))
+      {:ok, value} ->
+        {:ok, value}
+
+      {:error, reason} ->
+        {:error, reason}
     end
   end
 
@@ -367,7 +369,6 @@ defmodule WarmFuzzyThing.Either do
     case f.(value) do
       {:ok, value} -> {:ok, value}
       {:error, reason} -> {:error, reason}
-      other -> raise(bind_exception(other))
     end
   end
 
@@ -397,8 +398,4 @@ defmodule WarmFuzzyThing.Either do
   def {:error, _} <~> f when is_function(f), do: nil
   def {:ok, value} <~> {_default, f} when is_function(f), do: f.(value)
   def {:ok, value} <~> f when is_function(f), do: f.(value)
-
-  defp bind_exception(other) do
-    "Function provided to `WarmFuzzyThing.Either.bind/2` should return an `Either.t(any(), any())` type, got #{inspect(other)}"
-  end
 end

@@ -1,5 +1,12 @@
 # WarmFuzzyThing
 
+
+[![hex.pm version](https://img.shields.io/hexpm/v/warm_fuzzy_thing.svg?style=flat)](https://hex.pm/packages/warm_fuzzy_thing)
+[![Hex Docs](https://img.shields.io/badge/hex-docs-lightgreen.svg?style=flat)](https://hexdocs.pm/warm_fuzzy_thing/)
+[![Total Download](https://img.shields.io/hexpm/dt/warm_fuzzy_thing.svg?style=flat)](https://hex.pm/packages/warm_fuzzy_thing)
+[![License](https://img.shields.io/hexpm/l/warm_fuzzy_thing.svg?style=flat)](https://github.com/gspasov/warm_fuzzy_thing/blob/main/LICENSE)
+
+
 Simple way of working with `Maybe` and `Either` monads in Elixir. Both monads are setup in a way that allows for easy plug in into an already existing Elixir system since they don't rely on custom structures. Rather they rely on the already established ways of handling data in Elixir.
 
 ## Why Warm fuzzy thing?
@@ -44,6 +51,16 @@ iex> {:ok, 1}
 |> Either.map(fn v -> v + 1 end)
 |> Either.fold(&WarmFuzzyThing.id/1)
 4
+```
+
+## Installation
+Add `:warm_fuzzy_thing` as a dependency to your project's mix.exs:
+```elixir
+defp deps do
+  [
+    {:warm_fuzzy_thing, "~> 0.1.0"}
+  ]
+end
 ```
 
 ## Maybe

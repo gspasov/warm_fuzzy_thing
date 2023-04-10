@@ -2,7 +2,7 @@ defmodule WarmFuzzyThing.MixProject do
   use Mix.Project
 
   @version "0.1.0"
-  @source_url "https://github.com/gspasov/"
+  @source_url "https://github.com/gspasov/warm_fuzzy_thing"
   @authors ["Georgi Spasov"]
 
   def project do
